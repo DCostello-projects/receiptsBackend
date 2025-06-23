@@ -1,0 +1,13 @@
+#dockerfile.postgres
+# used for local development
+FROM postgres:13.21
+
+ENV POSTGRES_USER postgres
+ENV POSTGRES_PORT 5432
+
+ENV POSTGRES_DB qwooby
+ENV POSTGRES_PASSWORD password
+
+EXPOSE 5432
+
+CMD ["postgres"]

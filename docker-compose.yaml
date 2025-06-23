@@ -1,0 +1,79 @@
+#docker-compose.yaml
+services:
+  dev:
+    image: boringserver:latest
+    container_name: boringserver
+    build:
+      context: .
+      dockerfile: ./dockerfile.web
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"
+      - "8081:9000"
+      - "8082:9001"
+    depends_on:
+      - postgres
+      - minio
+    volumes:
+      - ./:/app
+    environment:
+      MINIO_URL: http://10.5.0.3:9000
+      DATABASE_URL: postgres://postgres:password@postgres:5432/app
+  #  env_file:
+  #    - ./.env
+    networks:
+      app-network:
+        ipv4_address: 10.5.0.5
+    tty: true
+    entrypoint: /bin/bash
+
+  minio:
+    image: minio/minio:RELEASE.2025-04-22T22-12-26Z-cpuv1
+    container_name: minio
+    # build:
+    #   context: .
+    #   dockerfile: ./docker/minio/dockerfile.minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - ./data/minio:/data
+    environment:
+      MINIO_ROOT_USER: MINIO_USER
+      MINIO_ROOT_PASSWORD: CHANGEME123
+    command: server /data --console-address ":9001"
+    networks:
+      app-network:
+        ipv4_address: 10.5.0.3
+
+  postgres:
+    image: postgres:13.21
+    container_name: postgres
+    # build:
+    #   context: .
+    #   dockerfile: ./docker/postgres/dockerfile.postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data/pgdata
+    environment:
+      PGDATA: /var/lib/postgresql/pgdata
+      POSTGRES_USER: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: app
+      POSTGRES_PASSWORD: password
+  #  env_file: ./.env
+    networks:
+      app-network:
+        ipv4_address: 10.5.0.2
+
+
+networks:
+  app-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.5.0.0/16
+          gateway: 10.5.0.1
+    
